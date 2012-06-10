@@ -1,0 +1,38 @@
+name:                scrobble
+version:             0.1.0.1
+synopsis:            Scrobbling server.
+description:         A library providing server-side support
+                     for the Audioscrobbler Realtime Submission protocol:
+                     <http://www.audioscrobbler.net/development/protocol/>
+license:             BSD3
+license-file:        LICENSE
+author:              Chris Done <chrisdone@gmail.com>
+maintainer:          Chris Done <chrisdone@gmail.com>
+copyright:           2012 Chris Done
+category:            Network
+build-type:          Simple
+cabal-version:       >=1.8
+
+source-repository head
+  type:     git
+  location: https://github.com/chrisdone/scrobble
+
+library
+  hs-source-dirs:    src
+  exposed-modules:   Scrobble.Server
+  other-modules:     Scrobble.Types
+  build-depends:     base >4 && <5,
+                     network,
+                     url,
+                     time,
+                     old-locale
+
+executable scrobble-server
+  hs-source-dirs:    src
+  main-is:           Server.hs
+  other-modules:     Scrobble
+  build-depends:     base >4 && <5,
+                     network,
+                     url,
+                     time,
+                     old-locale
