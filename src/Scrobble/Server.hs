@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns #-} 
 {-# LANGUAGE ViewPatterns   #-}
 
 -- | A server for scrobbling, based upon the Audioscrobbler Realtime

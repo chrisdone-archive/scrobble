@@ -1,9 +1,14 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
 -- | Scrobbling data types.
 
 module Scrobble.Types where
 
-import           Data.Time
-import           Network
+import Control.Exception
+import Data.Data
+import Data.Time
+import Network
+import Network.URI (URI)
 
 -- | Server configuration.
 data Config = Config
@@ -93,7 +98,32 @@ data Source
 
   deriving (Show,Enum,Eq,Read)
 
-
 -- | Server response.
 data Response = OK | BANNED | BADAUTH | FAILED String | BADSESSION
   deriving Show
+
+-- | A scrobbling client.
+data Client = Client
+  { cliToken      :: String -- ^ Session token.
+  , cliNowPlaying :: URI    -- ^ Now playing URL to submit to.
+  , cliSubmit     :: URI    -- ^ URL to submit listened tracks to.
+  } deriving (Show)
+
+-- | Details for creating a scrobbling client.
+data Details = Details
+  { detPassword :: String
+  , detUsername :: String
+  , detClient :: String -- ^ E.g. “qlb”.
+  , detVersion :: String -- ^ E.g. “0.9.2”.
+  , detServer :: URI
+  } deriving (Show)
+
+-- | Scrobble exception.
+data ScrobblerError
+  = ScrobblerBanned
+  | ScrobblerBadAuth
+  | ScrobblerBadTime
+  | ScrobblerFailed String
+  | ScrobblerHardFail
+  deriving (Show,Typeable,Data)
+instance Exception ScrobblerError
