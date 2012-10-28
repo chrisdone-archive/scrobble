@@ -6,6 +6,9 @@ Audioscrobbler. The demo is merely for a demonstration, you should use
 the server as a library and do what you want with the scrobbled
 tracks.
 
+It also supports scrobbling to Last.fm or other scrobbler service, see
+the Client module.
+
 See [the Audioscrobbler documentation for the
 protocol.](http://www.audioscrobbler.net/development/protocol/)
 
