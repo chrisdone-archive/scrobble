@@ -115,7 +115,7 @@ data Details = Details
   , detUsername :: String
   , detClient :: String -- ^ E.g. “qlb”.
   , detVersion :: String -- ^ E.g. “0.9.2”.
-  , detServer :: URI
+  , detServer :: URI -- ^ See defaultServer in "Scrobble.Client".
   } deriving (Show)
 
 -- | Scrobble exception.
@@ -125,5 +125,7 @@ data ScrobblerError
   | ScrobblerBadTime
   | ScrobblerFailed String
   | ScrobblerHardFail
+  | ScrobblerSubmitFail String
+  | ScrobblerNowPlayingFail String
   deriving (Show,Typeable,Data)
 instance Exception ScrobblerError

@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns #-} 
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ViewPatterns   #-}
 
 -- | A server for scrobbling, based upon the Audioscrobbler Realtime
@@ -6,7 +6,8 @@
 -- <http://www.audioscrobbler.net/development/protocol/>
 
 module Scrobble.Server
-  (startScrobbleServer)
+  (startScrobbleServer
+  ,module Scrobble.Types)
   where
 
 import           Scrobble.Types

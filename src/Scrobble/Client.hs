@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -7,14 +8,56 @@
 -- | A client for scrobbling, based upon the Audioscrobbler Realtime
 -- Submission protocol v1.2
 -- <http://www.audioscrobbler.net/development/protocol/>
+--
+-- Example:
+--
+-- @
+-- import Scrobble.Client
+-- import Data.Time
+--
+-- example = do
+--   client <- newClient Details
+--     { detPassword = \"YOURPASS\"
+--     , detUsername = \"YOURUSER\"
+--     , detClient   = \"qlb\"
+--     , detVersion  = \"0.9.2\"
+--     , detServer   = defaultServer
+--     }
+--   nowPlaying client NowPlaying
+--     { npArtist      = \"Kasabian\"
+--     , npTrack       = \"Ladies and Gentlemen\"
+--     , npAlbum       = Just \"West Ryder Pauper Lunatic Asylum\"
+--     , npLength      = Just 288
+--     , npPosition    = Nothing
+--     , npMusicBrainz = Nothing
+--     }
+--   timestamp <- getCurrentTime
+--   submitTracks client
+--                [Submission { subArtist      = \"Kasabian\"
+--                            , subTrack       = \"Ladies and Gentlemen\"
+--                            , subTimestamp   = timestamp
+--                            , subSource      = UserChosen
+--                            , subRating      = Nothing
+--                            , subLength      = Just 288
+--                            , subAlbum       = Just \"West Ryder Pauper Lunatic Asylum\"
+--                            , subPosition    = Nothing
+--                            , subMusicBrainz = Nothing
+--                            }]
+-- @
 
 module Scrobble.Client
+  (newClient
+  ,nowPlaying
+  ,submitTracks
+  ,defaultServer
+  ,module Scrobble.Types)
   where
 
 import Scrobble.Types
 
 import Control.Arrow
 import Control.Exception
+import Control.Monad
 import Data.Hash.MD5 (Str(..),md5s)
 import Data.List
 import Data.Maybe
@@ -75,12 +118,14 @@ parseAuth CurlGrab{..} =
 defaultServer :: URI
 defaultServer = fromJust (parseURI "http://post.audioscrobbler.com/")
 
--- | Send a now playing message.
-nowPlaying :: Client -> NowPlaying -> IO CurlGrab
+-- | Send a now playing message.  Throws "ScrobblerError".
+nowPlaying :: Client -> NowPlaying -> IO ()
 nowPlaying client@Client{..} nowplaying = do
-  curlGrab cliNowPlaying
-           [CurlPost True
-           ,CurlPostFields (map keyval (makeNowPlaying client nowplaying))]
+  CurlGrab{grabBody} <- curlGrab cliNowPlaying
+                                 [CurlPost True
+                                 ,CurlPostFields (map keyval (makeNowPlaying client nowplaying))]
+  unless (trim grabBody == "OK") $
+    throw (ScrobblerNowPlayingFail grabBody)
 
 -- | Make a now playing query.
 makeNowPlaying :: Client -> NowPlaying -> [(String,String)]
@@ -92,15 +137,16 @@ makeNowPlaying Client{..} NowPlaying{..} =
   ,("l",maybe "" show npLength)
   ,("n",maybe "" show npPosition)
   ,("m",fromMaybe "" npMusicBrainz)]
-  
--- | Submit a track.
-submitTrack :: Client -> [Submission] -> IO CurlGrab
-submitTrack client@Client{..} submissions = do
-  print (intercalate "&" (map keyval params))
-  curlGrab cliSubmit
-           [CurlPost True
-           ,CurlPostFields (map keyval params)]
-  
+
+-- | Submit track(s).  Throws "ScrobblerError".
+submitTracks :: Client -> [Submission] -> IO ()
+submitTracks client@Client{..} submissions = do
+  CurlGrab{grabBody} <- curlGrab cliSubmit
+                                 [CurlPost True
+                                 ,CurlPostFields (map keyval params)]
+  unless (trim grabBody == "OK") $
+    throw (ScrobblerSubmitFail grabBody)
+
   where params = [("s",cliToken)] ++
                  concat (zipWith (makeSubmission client) [0..] submissions)
 
@@ -112,11 +158,11 @@ makeSubmission Client{..} i Submission{..} = map hookup
   ,("i",epoch subTimestamp)
   ,("o",fromMaybe "U" (lookup subSource sources))
   ,("r",fromMaybe "" (subRating >>= \r -> lookup r ratings))
-  ,("l",maybe "" show subLength)  
+  ,("l",maybe "" show subLength)
   ,("b",fromMaybe "" subAlbum)
   ,("n",maybe "" show subPosition)
   ,("m",fromMaybe "" subMusicBrainz)]
-  
+
   where sources = [(UserChosen,"P")
                   ,(NonPersonlizedBroadcast,"R")
                   ,(Personalized,"E")
@@ -144,11 +190,15 @@ setQuery uri assoc = uri { uriQuery = "?" ++ encodePost assoc }
 epoch :: UTCTime -> String
 epoch = formatTime defaultTimeLocale "%s"
 
+-- | Just strip whitespace.
+trim :: String -> String
+trim = unwords . words
+
 --------------------------------------------------------------------------------
 -- Make Curl's API not crappy.
 
 -- | Grab a URL with curl.
-curlGrab :: URI -> [CurlOption] -> IO CurlGrab 
+curlGrab :: URI -> [CurlOption] -> IO CurlGrab
 curlGrab url options = do
   CurlResponse{..} <- curlGetResponse_ (show url) options
   return $ CurlGrab respCurlCode respStatus respStatusLine respHeaders respBody

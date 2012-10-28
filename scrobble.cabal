@@ -1,5 +1,5 @@
 name:                scrobble
-version:             0.2.0.0
+version:             0.2.1.0
 synopsis:            Scrobbling server.
 description:         A library providing server-side support
                      for the Audioscrobbler Realtime Submission protocol:
@@ -19,8 +19,7 @@ source-repository head
 
 library
   hs-source-dirs:    src
-  exposed-modules:   Scrobble.Server, Scrobble.Client
-  other-modules:     Scrobble.Types
+  exposed-modules:   Scrobble.Server, Scrobble.Client, Scrobble.Types
   build-depends:     base >4 && <5,
                      network,
                      url,
