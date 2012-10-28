@@ -111,7 +111,7 @@ parseAuth CurlGrab{..} =
     ["BADTIME"] -> throw ScrobblerBadTime
     [other] | isPrefixOf failed other ->
               throw (ScrobblerFailed (drop (length failed) other))
-            | otherwise -> throw ScrobblerHardFail
+    _ -> throw ScrobblerHardFail
   where failed = "FAILED "
 
 -- | Default Audioscrobbler server: http://post.audioscrobbler.com/
