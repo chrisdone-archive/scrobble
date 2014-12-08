@@ -1,5 +1,5 @@
 name:                scrobble
-version:             0.2.1.1
+version:             0.2.2
 synopsis:            Scrobbling server.
 description:         A library providing server-side support
                      for the Audioscrobbler Realtime Submission protocol:
